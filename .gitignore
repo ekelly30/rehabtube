@@ -1,0 +1,4 @@
+lib
+*.pyc
+private_config.py
+

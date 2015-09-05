@@ -106,8 +106,10 @@ class Search(ndb.Model):
 
 
 def get_recent_searches():
-    """Query the datastore to pull the RECENT_SEARCHES_TO_DISPLAY most recent
+    """
+    Query the datastore to pull the RECENT_SEARCHES_TO_DISPLAY most recent
     searches
+    :return: A list of the most recent searches in the database
     """
     logging.info(Search.query)
     q = Search.query().order(-Search.date)
@@ -118,4 +120,4 @@ def get_recent_searches():
 # Run the app with the appropriate page handlers
 app = webapp2.WSGIApplication([('/', MainHandler),
                                ('/search', SearchHandler),],
-                              debug=True)
+                              debug=False)

@@ -1,17 +1,23 @@
 <html>
   <body>
+    Search Youtube:
     <div>
       <form action="/search" method="get">
-        <input type="text" name="query"></div>
-        <input type="submit" value="Search"></div>
+        <input type="text" name="query">
+        <input type="submit" value="Search">
       </form>
     </div>
 
     {% if recent_searches %}
     <div>
+      10 Most Recent Searches:
       <ul>
         {% for search in recent_searches %}
-        <li><a href="/search?query={{ search.query }}"> {{ search.query }}</a></li>
+        <li>
+          <a href="/search?query={{ search.search_query }}">
+            {{ search.search_query }}
+          </a>
+        </li>
         {% endfor %}
       </ul>
     </div>

@@ -5,7 +5,7 @@ import logging
 import webapp2
 import jinja2
 from apiclient.discovery import build
-from google.appengine.ext import db
+from google.appengine.ext import ndb
 from private_config import YOUTUBE_API_KEY
 
 YOUTUBE_API_SERVICE_NAME = 'youtube'
@@ -43,7 +43,10 @@ class SearchHandler(webapp2.RequestHandler):
 
     def store_query(self):
         """Store the query in the database"""
-        query_data = Search(query=self.request.get('query'),
+        query=self.request.get('query')
+        query_key = ndb.Key(Search, query)
+        query_data = Search(key=query_key,
+                            search_query=query,
                             date=datetime.datetime.now())
         query_data.put()
 
@@ -96,18 +99,20 @@ class SearchHandler(webapp2.RequestHandler):
         self.response.write(template.render(page_data))
 
 
-class Search(db.Model):
+class Search(ndb.Model):
     """Model to hold previous searches"""
-    query = db.StringProperty(required=True)
-    date = db.DateTimeProperty(required=True)
+    search_query = ndb.StringProperty(required=True)
+    date = ndb.DateTimeProperty(required=True)
 
 
 def get_recent_searches():
-    """Query the datastore to pull the 10 most recent searches"""
-    q = Search.all()
-    q.order('-date')
-    recent_searchs = [_ for _ in q.run(limit=RECENT_SEARCHES_TO_DISPLAY)]
-    return recent_searchs
+    """Query the datastore to pull the RECENT_SEARCHES_TO_DISPLAY most recent
+    searches
+    """
+    logging.info(Search.query)
+    q = Search.query().order(-Search.date)
+    recent_searches = [_ for _ in q][:RECENT_SEARCHES_TO_DISPLAY]
+    return recent_searches
 
 
 # Run the app with the appropriate page handlers

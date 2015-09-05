@@ -1,8 +1,20 @@
 <html>
   <body>
-    <form action="/search" method="get">
-      <input type="text" name="query"></div>
-      <input type="submit" value="Search"></div>
-    </form>
+    <div>
+      <form action="/search" method="get">
+        <input type="text" name="query"></div>
+        <input type="submit" value="Search"></div>
+      </form>
+    </div>
+
+    {% if recent_searches %}
+    <div>
+      <ul>
+        {% for search in recent_searches %}
+        <li><a href="/search?query={{ search.query }}"> {{ search.query }}</a></li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
   </body>
 </html>

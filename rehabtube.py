@@ -1,13 +1,17 @@
 __author__ = 'ekelly30'
 import os
+import datetime
+import logging
 import webapp2
 import jinja2
 from apiclient.discovery import build
+from google.appengine.ext import db
 from private_config import YOUTUBE_API_KEY
 
 YOUTUBE_API_SERVICE_NAME = 'youtube'
 YOUTUBE_API_VERSION = 'v3'
-RESULTS_PER_PAGE = 20
+RESULTS_PER_PAGE = 30
+RECENT_SEARCHES_TO_DISPLAY = 10
 
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.join(os.path.dirname(__file__),
@@ -22,7 +26,9 @@ class MainHandler(webapp2.RequestHandler):
         """Get the main page, and previous searches"""
         self.response.headers['Content-type'] = 'text/html'
         template = JINJA_ENVIRONMENT.get_template('index.html')
-        self.response.write(template.render())
+        recent_searches = get_recent_searches()
+        template_data = {'recent_searches': recent_searches}
+        self.response.write(template.render(template_data))
 
 
 class SearchHandler(webapp2.RequestHandler):
@@ -30,9 +36,16 @@ class SearchHandler(webapp2.RequestHandler):
 
     def get(self):
         """Get the search results page"""
+        self.store_query()
         response = self.search_by_keyword()
         page_data = self.generate_page_data(response)
         self.generate_page(page_data)
+
+    def store_query(self):
+        """Store the query in the database"""
+        query_data = Search(query=self.request.get('query'),
+                            date=datetime.datetime.now())
+        query_data.put()
 
     def search_by_keyword(self):
         """
@@ -47,7 +60,8 @@ class SearchHandler(webapp2.RequestHandler):
         search_response = youtube.search().list(q=query,
                                                 part='id,snippet',
                                                 pageToken=page,
-                                                maxResults=RESULTS_PER_PAGE).execute()
+                                                maxResults=RESULTS_PER_PAGE,
+                                                type='video').execute()
         return search_response
 
     def generate_page_data(self, search_response):
@@ -80,6 +94,20 @@ class SearchHandler(webapp2.RequestHandler):
         self.response.headers['Content-type'] = 'text/html'
         template = JINJA_ENVIRONMENT.get_template('search.html')
         self.response.write(template.render(page_data))
+
+
+class Search(db.Model):
+    """Model to hold previous searches"""
+    query = db.StringProperty(required=True)
+    date = db.DateTimeProperty(required=True)
+
+
+def get_recent_searches():
+    """Query the datastore to pull the 10 most recent searches"""
+    q = Search.all()
+    q.order('-date')
+    recent_searchs = [_ for _ in q.run(limit=RECENT_SEARCHES_TO_DISPLAY)]
+    return recent_searchs
 
 
 # Run the app with the appropriate page handlers

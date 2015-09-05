@@ -12,5 +12,14 @@
         </strong>
       </div><br/><br/>
     {% endfor %}
+
+  {% if prev_page %}
+    <a href="/search?query={{ query }}&page={{ prev_page }}" >Previous</a>
+  {% endif %}
+
+  {% if next_page %}
+    <a href="/search?query={{ query }}&page={{ next_page }}" >Next</a>
+  {% endif %}
+
   </body>
 </html>
